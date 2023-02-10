@@ -1,7 +1,9 @@
+import { ReactNode } from "react";
+
 const ButtonPagination: React.FC<{
-  label: string;
   className?: string;
   disabled?: boolean;
+  children: ReactNode;
   onClick: () => void;
 }> = (props) => {
   const clickHandler = () => {
@@ -19,7 +21,7 @@ const ButtonPagination: React.FC<{
           : ""
       }`}
     >
-      {props.label}
+      {props.children}
     </button>
   );
 };

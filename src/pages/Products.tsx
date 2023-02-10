@@ -4,6 +4,7 @@ import {
   getGeneratedProductDescription,
   getProducts,
   GetProductsResponse,
+  PagingQueryParams,
   updateProduct,
 } from "../api/products/products.api";
 import ProductsList from "../components/ProductsList";
@@ -16,19 +17,17 @@ import {
 import Spinner from "../components/Spinner";
 import Button from "../components/Button";
 import Pagination from "../components/Pagination";
+import ErrorModal from "../components/ErrorModal";
+import { ErrorMessage } from "../utils/models";
 
 const ProductsPage = () => {
   const pageLimit = 100;
-  const [previousQueryParams, setPreviousQueryParams] = useState<string | null>(
-    null
-  );
-  const [nextQueryParams, setNextQueryParams] = useState<string | null>(null);
+  const [pagingQueryParams, setPagingQueryParams] =
+    useState<PagingQueryParams | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isLoadingUpdatedProducts, setIsLoadingUpdatedProducts] =
-    useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorMessage | null>(null);
 
   const selectedProductsHandler = (product: Product, checked: boolean) => {
     if (checked) {
@@ -49,16 +48,19 @@ const ProductsPage = () => {
   const fetchUpdatedProductsHandler = async () => {
     try {
       setError(null);
-      setIsLoadingUpdatedProducts(true);
+      setIsLoading(true);
       await fetchDescriptionsAndUpdateProducts(selectedProducts);
     } catch (error: any) {
-      setError("Get products with new description: " + error.message);
+      setError({
+        text: "Get products with new description: ",
+        message: error.message,
+      });
     } finally {
-      setIsLoadingUpdatedProducts(false);
+      setIsLoading(false);
     }
   };
 
-  const fetchProductsHandler = useCallback(async (query?: string | null) => {
+  const fetchProductsHandler = useCallback(async (query: string) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -70,11 +72,16 @@ const ProductsPage = () => {
         throw new Error("Something went wrong!");
       }
       const paging = response.data.paging;
-      setPreviousQueryParams(getQueryParamString(paging.previous));
-      setNextQueryParams(getQueryParamString(paging.next));
+      setPagingQueryParams({
+        next: getQueryParamString(paging.next),
+        previous: getQueryParamString(paging.previous),
+      });
       setProducts(response.data.products);
-    } catch (err: any) {
-      setError("Fetch products: " + err.message);
+    } catch (error: any) {
+      setError({
+        text: "Fetch products: ",
+        message: error.message,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +101,19 @@ const ProductsPage = () => {
     }
   };
 
-  const previousPageHandler = () => fetchProductsHandler(previousQueryParams);
-  const nextPageHandler = () => fetchProductsHandler(nextQueryParams);
+  const previousPageHandler = () => {
+    const previous: string = (pagingQueryParams?.previous as string) || "";
+    fetchProductsHandler(previous);
+  };
+
+  const nextPageHandler = () => {
+    const next: string = (pagingQueryParams?.next as string) || "";
+    fetchProductsHandler(next);
+  };
+
+  const errorHandler = () => {
+    setError(null);
+  };
 
   useEffect(() => {
     const query = `limit=${pageLimit}&order=created_at`;
@@ -112,10 +130,6 @@ const ProductsPage = () => {
     );
   }
 
-  if (error) {
-    content = <p>{error}</p>;
-  }
-
   if (products.length > 0) {
     content = (
       <div className="mx-4 mb-6 mt-4">
@@ -125,30 +139,41 @@ const ProductsPage = () => {
         />
         <div
           className="sticky bg-gray-100 mt-4 bottom-0 py-4 px-2 border
-        rounded-md border-gray-300 z-50 flex flex-wrap items-center justify-between mb-2"
+        rounded-md border-gray-300 z-10 flex flex-wrap items-center justify-between mb-2"
         >
           <Button
-            label="Update to AI descriptions"
-            disabled={isLoadingUpdatedProducts || !selectedProducts.length}
-            indicator={selectedProducts.length}
+            disabled={isLoading || !selectedProducts.length}
             onClick={fetchUpdatedProductsHandler}
-          />
-          <div>
-            {error ? <p className="text-red-700">{error}</p> : ""}
-            {isLoadingUpdatedProducts && <Spinner />}
-          </div>
+          >
+            Update to AI descriptions
+            <span className="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
+              {selectedProducts.length}
+            </span>
+          </Button>
+          <div>{isLoading && <Spinner />}</div>
           <Pagination
             previousClick={previousPageHandler}
-            previousBtnDisabled={!previousQueryParams}
+            previousBtnDisabled={!pagingQueryParams?.previous}
             nextClick={nextPageHandler}
-            nextBtnDisabled={!nextQueryParams}
+            nextBtnDisabled={!pagingQueryParams?.next}
           />
         </div>
       </div>
     );
   }
 
-  return <div>{content}</div>;
+  return (
+    <>
+      {error && (
+        <ErrorModal
+          title={error.text}
+          message={error.message}
+          onConfirm={errorHandler}
+        ></ErrorModal>
+      )}
+      {content}
+    </>
+  );
 };
 
 export default ProductsPage;

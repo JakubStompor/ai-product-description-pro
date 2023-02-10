@@ -7,8 +7,8 @@ export const currentDateMinusOneMonth = (): string => {
     .slice(0, 7);
 };
 
-export function getQueryParamString(params: any): string | null {
-  if (!params || JSON.stringify(params) === "{}") return null;
+export function getQueryParamString(params: any): string {
+  if (!params || JSON.stringify(params) === "{}") return "";
   const array = [];
   for (const key in params) {
     const param = `${key}=${params[key]}`;

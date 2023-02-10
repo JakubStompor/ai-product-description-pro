@@ -1,7 +1,8 @@
+import { ReactNode } from "react";
+
 const Button: React.FC<{
-  disabled: boolean;
-  indicator: string | number;
-  label: string;
+  disabled?: boolean;
+  children?: ReactNode;
   onClick: () => void;
 }> = (props) => {
   const clickHandler = () => {
@@ -18,10 +19,7 @@ const Button: React.FC<{
           : ""
       }`}
     >
-      {props.label}
-      <span className="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
-        {props.indicator}
-      </span>
+      {props.children}
     </button>
   );
 };

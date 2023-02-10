@@ -2,16 +2,18 @@ import axios, { AxiosResponse } from "axios";
 import { API_CREDENTIALS } from "../credentials";
 import { Product } from "./products.model";
 
+export interface PagingQueryParams {
+  previous: Object | string;
+  next: Object | string;
+}
 export interface GetProductsResponse {
-  paging: {
-    previous: Object;
-    next: Object;
-  };
+  paging: PagingQueryParams;
   products: Product[];
 }
+
 export async function getProducts(
   productsCollectionDate: string,
-  query?: string | null
+  query: string
 ): Promise<AxiosResponse<GetProductsResponse>> {
   let queryString = `?${query}`;
   if (!query) {

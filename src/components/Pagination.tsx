@@ -16,15 +16,17 @@ const Pagination: React.FC<{
     <div>
       <ButtonPagination
         disabled={props.previousBtnDisabled}
-        label="Previous"
         onClick={previousClickHandler}
-      />
+      >
+        Previous
+      </ButtonPagination>
       <ButtonPagination
         className="ml-3"
         disabled={props.nextBtnDisabled}
-        label="Next"
         onClick={nextClickHandler}
-      />
+      >
+        Next
+      </ButtonPagination>
     </div>
   );
 };
