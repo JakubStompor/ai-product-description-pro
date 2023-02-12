@@ -1,22 +1,25 @@
 import { format, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
-import { Product } from "../api/products/products.model";
-import CheckBox from "./CheckBox";
+import CheckBox from "../CheckBox";
+import { ProductListItem } from "./ProductList.model";
 
 const ProductItem: React.FC<{
-  item: Product;
+  item: ProductListItem;
   index: number;
-  onProductSelect: (product: Product, checked: boolean) => void;
+  onProductSelect: (product: ProductListItem) => void;
 }> = (props) => {
   const selectProductHandler = (checked: boolean) => {
-    props.onProductSelect(props.item, checked);
+    props.onProductSelect({
+      ...props.item,
+      checked,
+    });
   };
   return (
     <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
       <td className="w-4 px-6 py-4">
         <div className="flex items-center">
           <CheckBox
-            checked={false}
+            checked={props.item.checked}
             id={props.index}
             label="Select product"
             onChange={selectProductHandler}

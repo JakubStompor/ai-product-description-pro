@@ -1,13 +1,17 @@
-import { Product } from "../api/products/products.model";
-import ProductItem from "./ProductItem";
+import CheckBox from "../CheckBox";
+import { ProductListItem } from "./ProductList.model";
+import ProductItem from "./ProductListItem";
 
-const ProductsList: React.FC<{
-  items: Product[];
-  onProductSelect: (product: Product, checked: boolean) => void;
+const ProductList: React.FC<{
+  items: ProductListItem[];
+  onProductSelect: (product: ProductListItem) => void;
+  onToggleProductSelect: (checked: boolean) => void;
 }> = (props) => {
-  const selectedProductsHandler = (product: Product, checked: boolean) => {
-    props.onProductSelect(product, checked);
-  };
+  const shouldCheckToggleAll = props.items.every((product) => product.checked);
+  const selectedProductsHandler = (product: ProductListItem) =>
+    props.onProductSelect(product);
+  const toggleProductSelectHandler = (checked: boolean) =>
+    props.onToggleProductSelect(checked);
   return (
     <div className="flex flex-col">
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -15,7 +19,12 @@ const ProductsList: React.FC<{
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
               <th scope="col" className="px-6 py-3">
-                <span>Select</span>
+                <CheckBox
+                  id="select-all"
+                  label="Select all"
+                  checked={shouldCheckToggleAll}
+                  onChange={toggleProductSelectHandler}
+                />
               </th>
               <th scope="col" className="px-6 py-3">
                 Title
@@ -49,4 +58,4 @@ const ProductsList: React.FC<{
   );
 };
 
-export default ProductsList;
+export default ProductList;

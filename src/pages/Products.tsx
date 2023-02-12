@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { Product } from "../api/products/products.model";
 import {
   getGeneratedProductDescription,
   getProducts,
@@ -7,7 +6,7 @@ import {
   PagingQueryParams,
   updateProduct,
 } from "../api/products/products.api";
-import ProductsList from "../components/ProductsList";
+import ProductList from "../components/ProductList/ProductList";
 import { AxiosResponse } from "axios";
 import {
   currentDateMinusOneMonth,
@@ -19,37 +18,75 @@ import Button from "../components/Button";
 import Pagination from "../components/Pagination";
 import ErrorModal from "../components/ErrorModal";
 import { ErrorMessage } from "../utils/models";
+import { ProductListItem } from "../components/ProductList/ProductList.model";
 
 const ProductsPage = () => {
   const pageLimit = 100;
   const [pagingQueryParams, setPagingQueryParams] =
     useState<PagingQueryParams | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductListItem[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<ProductListItem[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<ErrorMessage | null>(null);
 
-  const selectedProductsHandler = (product: Product, checked: boolean) => {
-    if (checked) {
-      setSelectedProducts((prevProducts) => [
-        ...prevProducts,
-        {
-          ...product,
-          body_html: removeHtmlTags(product.body_html),
-        },
-      ]);
-    } else {
-      setSelectedProducts((prevProducts) =>
-        prevProducts.filter((p) => p.id !== product.id)
-      );
-    }
+  const selectedProductHandler = (item: ProductListItem) => {
+    setProducts((prevProducts) => [
+      ...prevProducts.map((product) => {
+        return product.id === item.id
+          ? { ...item, body_html: removeHtmlTags(item.body_html) }
+          : {
+              ...product,
+              body_html: removeHtmlTags(product.body_html),
+            };
+      }),
+    ]);
   };
 
-  const fetchUpdatedProductsHandler = async () => {
+  const toggleProductSelectHandler = (checked: boolean) => {
+    setProducts((prevProducts) => [
+      ...prevProducts.map((product) => ({ ...product, checked })),
+    ]);
+  };
+
+  const previousPageHandler = () => {
+    const previous: string = (pagingQueryParams?.previous as string) || "";
+    fetchProductsHandler(previous);
+  };
+
+  const nextPageHandler = () => {
+    const next: string = (pagingQueryParams?.next as string) || "";
+    fetchProductsHandler(next);
+  };
+
+  const errorHandler = () => setError(null);
+
+  useEffect(() => {
+    const query = `limit=${pageLimit}&order=created_at`;
+    fetchProductsHandler(query);
+  }, []);
+
+  useEffect(() => {
+    const selectedProducts: ProductListItem[] = products.filter(
+      (product) => product.checked
+    );
+    setSelectedProducts(selectedProducts);
+  }, [products]);
+
+  async function updateProductsHandler() {
     try {
       setError(null);
       setIsLoading(true);
-      await fetchDescriptionsAndUpdateProducts(selectedProducts);
+      for (const product of selectedProducts) {
+        const description: string = `${product.title}.${product.body_html}`;
+        const response: AxiosResponse<string> =
+          await getGeneratedProductDescription(description);
+        await updateProduct(currentDateMinusOneMonth(), product.id, {
+          ...product,
+          body_html: response.data,
+        });
+      }
     } catch (error: any) {
       setError({
         text: "Get products with new description: ",
@@ -58,7 +95,7 @@ const ProductsPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   const fetchProductsHandler = useCallback(async (query: string) => {
     try {
@@ -76,7 +113,11 @@ const ProductsPage = () => {
         next: getQueryParamString(paging.next),
         previous: getQueryParamString(paging.previous),
       });
-      setProducts(response.data.products);
+      const products = response.data.products.map((product) => ({
+        ...product,
+        checked: false,
+      }));
+      setProducts(products);
     } catch (error: any) {
       setError({
         text: "Fetch products: ",
@@ -86,39 +127,6 @@ const ProductsPage = () => {
       setIsLoading(false);
     }
   }, []);
-
-  const fetchDescriptionsAndUpdateProducts = async (
-    products: Product[]
-  ): Promise<void> => {
-    for (const product of products) {
-      const description: string = `${product.title}.${product.body_html}`;
-      const response: AxiosResponse<string> =
-        await getGeneratedProductDescription(description);
-      await updateProduct(currentDateMinusOneMonth(), product.id, {
-        ...product,
-        body_html: response.data,
-      });
-    }
-  };
-
-  const previousPageHandler = () => {
-    const previous: string = (pagingQueryParams?.previous as string) || "";
-    fetchProductsHandler(previous);
-  };
-
-  const nextPageHandler = () => {
-    const next: string = (pagingQueryParams?.next as string) || "";
-    fetchProductsHandler(next);
-  };
-
-  const errorHandler = () => {
-    setError(null);
-  };
-
-  useEffect(() => {
-    const query = `limit=${pageLimit}&order=created_at`;
-    fetchProductsHandler(query);
-  }, [fetchProductsHandler]);
 
   let content = <p>Products no found.</p>;
 
@@ -133,9 +141,10 @@ const ProductsPage = () => {
   if (products.length > 0) {
     content = (
       <div className="mx-4 mb-6 mt-4">
-        <ProductsList
+        <ProductList
           items={products}
-          onProductSelect={selectedProductsHandler}
+          onProductSelect={selectedProductHandler}
+          onToggleProductSelect={toggleProductSelectHandler}
         />
         <div
           className="sticky bg-gray-100 mt-4 bottom-0 py-4 px-2 border
@@ -143,10 +152,10 @@ const ProductsPage = () => {
         >
           <Button
             disabled={isLoading || !selectedProducts.length}
-            onClick={fetchUpdatedProductsHandler}
+            onClick={updateProductsHandler}
           >
             Update to AI descriptions
-            <span className="inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
+            <span className="inline-flex items-center justify-center h-4 px-2 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full">
               {selectedProducts.length}
             </span>
           </Button>

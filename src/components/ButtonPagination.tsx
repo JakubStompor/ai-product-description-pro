@@ -6,9 +6,7 @@ const ButtonPagination: React.FC<{
   children: ReactNode;
   onClick: () => void;
 }> = (props) => {
-  const clickHandler = () => {
-    props.onClick();
-  };
+  const clickHandler = () => props.onClick();
   return (
     <button
       onClick={clickHandler}
