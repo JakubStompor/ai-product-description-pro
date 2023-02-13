@@ -4,6 +4,7 @@ import ProductItem from "./ProductListItem";
 
 const ProductList: React.FC<{
   items: ProductListItem[];
+  isLoading?: boolean;
   onProductSelect: (product: ProductListItem) => void;
   onToggleProductSelect: (checked: boolean) => void;
 }> = (props) => {
@@ -22,6 +23,7 @@ const ProductList: React.FC<{
                 <CheckBox
                   id="select-all"
                   label="Select all"
+                  disabled={props.isLoading}
                   checked={shouldCheckToggleAll}
                   onChange={toggleProductSelectHandler}
                 />
@@ -45,6 +47,7 @@ const ProductList: React.FC<{
               return (
                 <ProductItem
                   onProductSelect={selectedProductsHandler}
+                  disabled={props.isLoading}
                   index={index}
                   item={item}
                   key={item.id}

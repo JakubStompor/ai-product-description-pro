@@ -6,6 +6,7 @@ import { ProductListItem } from "./ProductList.model";
 const ProductItem: React.FC<{
   item: ProductListItem;
   index: number;
+  disabled?: boolean;
   onProductSelect: (product: ProductListItem) => void;
 }> = (props) => {
   const selectProductHandler = (checked: boolean) => {
@@ -20,6 +21,7 @@ const ProductItem: React.FC<{
         <div className="flex items-center">
           <CheckBox
             checked={props.item.checked}
+            disabled={props.disabled}
             id={props.index}
             label="Select product"
             onChange={selectProductHandler}

@@ -28,8 +28,8 @@ export async function updateProduct(
   productsCollectionDate: string,
   productId: number,
   product: Product
-): Promise<AxiosResponse<Product[]>> {
-  return axios<Product[]>({
+): Promise<AxiosResponse<Product>> {
+  return axios<Product>({
     method: "put",
     url: `${API_CREDENTIALS.host}${API_CREDENTIALS.apiUrl}/${productsCollectionDate}/products/${productId}`,
     data: {

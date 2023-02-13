@@ -19,6 +19,7 @@ import Pagination from "../components/Pagination";
 import ErrorModal from "../components/ErrorModal";
 import { ErrorMessage } from "../utils/models";
 import { ProductListItem } from "../components/ProductList/ProductList.model";
+import { Product } from "../api/products/products.model";
 
 const ProductsPage = () => {
   const pageLimit = 100;
@@ -78,14 +79,21 @@ const ProductsPage = () => {
     try {
       setError(null);
       setIsLoading(true);
-      for (const product of selectedProducts) {
-        const description: string = `${product.title}.${product.body_html}`;
+      for (const item of selectedProducts) {
+        const description: string = `${item.title}.${item.body_html}`;
         const response: AxiosResponse<string> =
           await getGeneratedProductDescription(description);
-        await updateProduct(currentDateMinusOneMonth(), product.id, {
-          ...product,
-          body_html: response.data,
-        });
+        const productResponse: AxiosResponse<Product> = await updateProduct(
+          currentDateMinusOneMonth(),
+          item.id,
+          {
+            ...item,
+            body_html: response.data,
+          }
+        );
+        const product: Product = productResponse.data;
+        const productListItem: ProductListItem = { ...product, checked: false };
+        selectedProductHandler(productListItem);
       }
     } catch (error: any) {
       setError({
@@ -93,6 +101,7 @@ const ProductsPage = () => {
         message: error.message,
       });
     } finally {
+      toggleProductSelectHandler(false);
       setIsLoading(false);
     }
   }
@@ -143,6 +152,7 @@ const ProductsPage = () => {
       <div className="mx-4 mb-6 mt-4">
         <ProductList
           items={products}
+          isLoading={isLoading}
           onProductSelect={selectedProductHandler}
           onToggleProductSelect={toggleProductSelectHandler}
         />
