@@ -1,25 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-  getGeneratedProductDescription,
-  getProducts,
-  GetProductsResponse,
-  PagingQueryParams,
-  updateProduct,
-} from "../api/products/products.api";
-import ProductList from "../components/ProductList/ProductList";
 import { AxiosResponse } from "axios";
+import { useState, useCallback, useEffect } from "react";
 import {
+  PagingQueryParams,
+  getGeneratedProductDescription,
+  GetProductsResponse,
+  getProducts,
+  updateProduct,
+} from "../../api/products/products.api";
+import { Product } from "../../api/products/products.model";
+import Button from "../../components/Button";
+import ErrorModal from "../../components/ErrorModal";
+import Pagination from "../../components/Pagination/Pagination";
+import ProductList from "../../components/ProductList/ProductList";
+import { ProductListItem } from "../../components/ProductList/ProductList.model";
+import Spinner from "../../components/Spinner";
+import {
+  removeHtmlTags,
   currentDateMinusOneMonth,
   getQueryParamString,
-  removeHtmlTags,
-} from "../utils/functions";
-import Spinner from "../components/Spinner";
-import Button from "../components/Button";
-import Pagination from "../components/Pagination";
-import ErrorModal from "../components/ErrorModal";
-import { ErrorMessage } from "../utils/models";
-import { ProductListItem } from "../components/ProductList/ProductList.model";
-import { Product } from "../api/products/products.model";
+} from "../../utils/functions";
+import { ErrorMessage } from "../../utils/models";
 
 const ProductsPage = () => {
   const pageLimit = 100;
@@ -32,7 +32,7 @@ const ProductsPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<ErrorMessage | null>(null);
 
-  const selectedProductHandler = (item: ProductListItem) => {
+  const setProductsHandler = (item: ProductListItem) => {
     setProducts((prevProducts) => [
       ...prevProducts.map((product) => {
         return product.id === item.id
@@ -63,41 +63,32 @@ const ProductsPage = () => {
 
   const errorHandler = () => setError(null);
 
-  useEffect(() => {
-    const query = `limit=${pageLimit}&order=created_at`;
-    fetchProductsHandler(query);
-  }, []);
-
-  useEffect(() => {
-    const selectedProducts: ProductListItem[] = products.filter(
-      (product) => product.checked
-    );
-    setSelectedProducts(selectedProducts);
-  }, [products]);
-
   async function updateProductsHandler() {
     try {
       setError(null);
       setIsLoading(true);
       for (const item of selectedProducts) {
-        const description: string = `${item.title}.${item.body_html}`;
-        const response: AxiosResponse<string> =
-          await getGeneratedProductDescription(description);
+        const descriptionResponse: AxiosResponse<string> =
+          await getGeneratedProductDescription(
+            `${item.title}.${item.body_html}`
+          );
+        const collectionDate = currentDateMinusOneMonth();
         const productResponse: AxiosResponse<Product> = await updateProduct(
-          currentDateMinusOneMonth(),
+          collectionDate,
           item.id,
           {
             ...item,
-            body_html: response.data,
+            body_html: descriptionResponse.data,
           }
         );
-        const product: Product = productResponse.data;
-        const productListItem: ProductListItem = { ...product, checked: false };
-        selectedProductHandler(productListItem);
+        setProductsHandler({
+          ...productResponse.data,
+          checked: false,
+        });
       }
     } catch (error: any) {
       setError({
-        text: "Get products with new description: ",
+        text: "Update products",
         message: error.message,
       });
     } finally {
@@ -114,9 +105,6 @@ const ProductsPage = () => {
         currentDateMinusOneMonth(),
         query
       );
-      if (response.status !== 200) {
-        throw new Error("Something went wrong!");
-      }
       const paging = response.data.paging;
       setPagingQueryParams({
         next: getQueryParamString(paging.next),
@@ -129,13 +117,25 @@ const ProductsPage = () => {
       setProducts(products);
     } catch (error: any) {
       setError({
-        text: "Fetch products: ",
+        text: "Fetch products",
         message: error.message,
       });
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const query = `limit=${pageLimit}&order=created_at`;
+    fetchProductsHandler(query);
+  }, [fetchProductsHandler]);
+
+  useEffect(() => {
+    const selectedProducts: ProductListItem[] = products.filter(
+      (product) => product.checked
+    );
+    setSelectedProducts(selectedProducts);
+  }, [products]);
 
   let content = <p>Products no found.</p>;
 
@@ -153,7 +153,7 @@ const ProductsPage = () => {
         <ProductList
           items={products}
           isLoading={isLoading}
-          onProductSelect={selectedProductHandler}
+          onProductSelect={setProductsHandler}
           onToggleProductSelect={toggleProductSelectHandler}
         />
         <div
@@ -172,9 +172,9 @@ const ProductsPage = () => {
           <div>{isLoading && <Spinner />}</div>
           <Pagination
             previousClick={previousPageHandler}
-            previousBtnDisabled={!pagingQueryParams?.previous}
+            previousBtnDisabled={!pagingQueryParams?.previous || isLoading}
             nextClick={nextPageHandler}
-            nextBtnDisabled={!pagingQueryParams?.next}
+            nextBtnDisabled={!pagingQueryParams?.next || isLoading}
           />
         </div>
       </div>

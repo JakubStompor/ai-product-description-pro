@@ -6,12 +6,9 @@ const Pagination: React.FC<{
   previousBtnDisabled?: boolean;
   nextBtnDisabled?: boolean;
 }> = (props) => {
-  const previousClickHandler = () => {
-    props.previousClick();
-  };
-  const nextClickHandler = () => {
-    props.nextClick();
-  };
+  const previousClickHandler = () => props.previousClick();
+  const nextClickHandler = () => props.nextClick();
+
   return (
     <div>
       <ButtonPagination
