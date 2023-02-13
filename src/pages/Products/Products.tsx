@@ -1,11 +1,7 @@
-import { AxiosResponse } from "axios";
 import { useState, useCallback, useEffect } from "react";
 import {
   PagingQueryParams,
-  getGeneratedProductDescription,
   GetProductsResponse,
-  getProducts,
-  updateProduct,
 } from "../../api/products/products.api";
 import { Product } from "../../api/products/products.model";
 import Button from "../../components/Button";
@@ -14,21 +10,23 @@ import Pagination from "../../components/Pagination/Pagination";
 import ProductList from "../../components/ProductList/ProductList";
 import { ProductListItem } from "../../components/ProductList/ProductList.model";
 import Spinner from "../../components/Spinner";
-import {
-  removeHtmlTags,
-  currentDateMinusOneMonth,
-  getQueryParamString,
-} from "../../utils/functions";
 import { ErrorMessage } from "../../utils/models";
+import {
+  getPagingQueryParams,
+  getProductDescription,
+  getProductListItem,
+  getProductListItems,
+  getProductsByQuery,
+  updateSingleProduct,
+} from "./Products.utils";
 
 const ProductsPage = () => {
-  const pageLimit = 100;
-  const [pagingQueryParams, setPagingQueryParams] =
-    useState<PagingQueryParams | null>(null);
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<ProductListItem[]>(
     []
   );
+  const [pagingQueryParams, setPagingQueryParams] =
+    useState<PagingQueryParams | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<ErrorMessage | null>(null);
 
@@ -36,18 +34,15 @@ const ProductsPage = () => {
     setProducts((prevProducts) => [
       ...prevProducts.map((product) => {
         return product.id === item.id
-          ? { ...item, body_html: removeHtmlTags(item.body_html) }
-          : {
-              ...product,
-              body_html: removeHtmlTags(product.body_html),
-            };
+          ? getProductListItem(item, item.checked)
+          : getProductListItem(product, product.checked);
       }),
     ]);
   };
 
   const toggleProductSelectHandler = (checked: boolean) => {
     setProducts((prevProducts) => [
-      ...prevProducts.map((product) => ({ ...product, checked })),
+      ...getProductListItems(prevProducts, checked),
     ]);
   };
 
@@ -63,29 +58,30 @@ const ProductsPage = () => {
 
   const errorHandler = () => setError(null);
 
-  async function updateProductsHandler() {
+  const initialize = async (query: string) => {
+    const response: GetProductsResponse = await getProductsByQuery(query);
+    setPagingQueryParams(getPagingQueryParams(response.paging));
+    setProducts(getProductListItems(response.products, false));
+  };
+
+  const updateProducts = async () => {
+    for (const selectedProduct of selectedProducts) {
+      const description: string = await getProductDescription(
+        `${selectedProduct.title}.${selectedProduct.body_html}`
+      );
+      const product: Product = await updateSingleProduct(
+        selectedProduct,
+        description
+      );
+      setProductsHandler(getProductListItem(product, false));
+    }
+  };
+
+  const updateProductsHandler = async () => {
     try {
       setError(null);
       setIsLoading(true);
-      for (const item of selectedProducts) {
-        const descriptionResponse: AxiosResponse<string> =
-          await getGeneratedProductDescription(
-            `${item.title}.${item.body_html}`
-          );
-        const collectionDate = currentDateMinusOneMonth();
-        const productResponse: AxiosResponse<Product> = await updateProduct(
-          collectionDate,
-          item.id,
-          {
-            ...item,
-            body_html: descriptionResponse.data,
-          }
-        );
-        setProductsHandler({
-          ...productResponse.data,
-          checked: false,
-        });
-      }
+      await updateProducts();
     } catch (error: any) {
       setError({
         text: "Update products",
@@ -95,26 +91,13 @@ const ProductsPage = () => {
       toggleProductSelectHandler(false);
       setIsLoading(false);
     }
-  }
+  };
 
   const fetchProductsHandler = useCallback(async (query: string) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response: AxiosResponse<GetProductsResponse> = await getProducts(
-        currentDateMinusOneMonth(),
-        query
-      );
-      const paging = response.data.paging;
-      setPagingQueryParams({
-        next: getQueryParamString(paging.next),
-        previous: getQueryParamString(paging.previous),
-      });
-      const products = response.data.products.map((product) => ({
-        ...product,
-        checked: false,
-      }));
-      setProducts(products);
+      await initialize(query);
     } catch (error: any) {
       setError({
         text: "Fetch products",
@@ -126,6 +109,7 @@ const ProductsPage = () => {
   }, []);
 
   useEffect(() => {
+    const pageLimit = 100;
     const query = `limit=${pageLimit}&order=created_at`;
     fetchProductsHandler(query);
   }, [fetchProductsHandler]);
