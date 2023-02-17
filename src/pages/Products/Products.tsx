@@ -30,7 +30,7 @@ const ProductsPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<ErrorMessage | null>(null);
 
-  const setProductsHandler = (item: ProductListItem) => {
+  const setProductsHandler = (item: ProductListItem): void => {
     setProducts((prevProducts) => [
       ...prevProducts.map((product) => {
         return product.id === item.id
@@ -40,31 +40,31 @@ const ProductsPage = () => {
     ]);
   };
 
-  const toggleProductSelectHandler = (checked: boolean) => {
+  const toggleProductSelectHandler = (checked: boolean): void => {
     setProducts((prevProducts) => [
       ...getProductListItems(prevProducts, checked),
     ]);
   };
 
-  const previousPageHandler = () => {
+  const previousPageHandler = (): void => {
     const previous: string = (pagingQueryParams?.previous as string) || "";
     fetchProductsHandler(previous);
   };
 
-  const nextPageHandler = () => {
+  const nextPageHandler = (): void => {
     const next: string = (pagingQueryParams?.next as string) || "";
     fetchProductsHandler(next);
   };
 
-  const errorHandler = () => setError(null);
+  const errorHandler = (): void => setError(null);
 
-  const initialize = async (query: string) => {
+  const initialize = async (query: string): Promise<void> => {
     const response: GetProductsResponse = await getProductsByQuery(query);
     setPagingQueryParams(getPagingQueryParams(response.paging));
     setProducts(getProductListItems(response.products, false));
   };
 
-  const updateProducts = async () => {
+  const updateProducts = async (): Promise<void> => {
     for (const selectedProduct of selectedProducts) {
       const description: string = await getProductDescription(
         `${selectedProduct.title}.${selectedProduct.body_html}`
@@ -77,7 +77,7 @@ const ProductsPage = () => {
     }
   };
 
-  const updateProductsHandler = async () => {
+  const updateProductsHandler = async (): Promise<void> => {
     try {
       setError(null);
       setIsLoading(true);
@@ -93,20 +93,23 @@ const ProductsPage = () => {
     }
   };
 
-  const fetchProductsHandler = useCallback(async (query: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await initialize(query);
-    } catch (error: any) {
-      setError({
-        text: "Fetch products",
-        message: error.message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const fetchProductsHandler = useCallback(
+    async (query: string): Promise<void> => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        await initialize(query);
+      } catch (error: any) {
+        setError({
+          text: "Fetch products",
+          message: error.message,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const pageLimit = 100;

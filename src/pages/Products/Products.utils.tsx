@@ -42,7 +42,9 @@ export function getProductListItems(
   return products.map((product) => getProductListItem(product, checked));
 }
 
-export const getProductsByQuery = async (query: string) => {
+export const getProductsByQuery = async (
+  query: string
+): Promise<GetProductsResponse> => {
   const response: AxiosResponse<GetProductsResponse> = await getProducts(
     currentDateMinusOneMonth(),
     query
@@ -50,7 +52,9 @@ export const getProductsByQuery = async (query: string) => {
   return response.data;
 };
 
-export const getProductDescription = async (description: string) => {
+export const getProductDescription = async (
+  description: string
+): Promise<string> => {
   const response = await getGeneratedProductDescription(description);
   return response.data;
 };
@@ -58,7 +62,7 @@ export const getProductDescription = async (description: string) => {
 export const updateSingleProduct = async (
   product: ProductListItem,
   description: string
-) => {
+): Promise<Product> => {
   const collectionDate = currentDateMinusOneMonth();
   const response = await updateProduct(collectionDate, product.id, {
     ...product,
