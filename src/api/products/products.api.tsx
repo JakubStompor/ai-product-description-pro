@@ -15,12 +15,12 @@ export async function getProducts(
   productsCollectionDate: string,
   query: string
 ): Promise<AxiosResponse<GetProductsResponse>> {
-  let queryString = `?${query}`;
+  let queryString = `${query}`;
   if (!query) {
     queryString = "";
   }
   return axios.get<GetProductsResponse>(
-    `${API_CREDENTIALS.host}${API_CREDENTIALS.apiUrl}/${productsCollectionDate}/products.json${queryString}`
+    `${API_CREDENTIALS.host}/products/${productsCollectionDate}?${queryString}`
   );
 }
 
@@ -31,7 +31,7 @@ export async function updateProduct(
 ): Promise<AxiosResponse<Product>> {
   return axios<Product>({
     method: "put",
-    url: `${API_CREDENTIALS.host}${API_CREDENTIALS.apiUrl}/${productsCollectionDate}/products/${productId}`,
+    url: `${API_CREDENTIALS.host}/products/${productsCollectionDate}/${productId}`,
     data: {
       product: product,
     },
@@ -43,9 +43,9 @@ export async function getGeneratedProductDescription(
 ): Promise<AxiosResponse<string>> {
   return axios<string>({
     method: "post",
-    url: `${API_CREDENTIALS.host}${API_CREDENTIALS.apiUrl}/get-product-description`,
+    url: `${API_CREDENTIALS.host}/ai/productDescription`,
     data: {
-      productDescription: currentProductDescription,
+      currentProductDescription: currentProductDescription,
     },
   });
 }

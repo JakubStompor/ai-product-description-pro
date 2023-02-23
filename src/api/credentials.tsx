@@ -5,5 +5,5 @@ interface ApiCredentials {
 
 export const API_CREDENTIALS: ApiCredentials = {
   host: "http://localhost:3000",
-  apiUrl: "/api",
+  apiUrl: "/",
 };

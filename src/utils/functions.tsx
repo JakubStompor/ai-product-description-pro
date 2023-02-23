@@ -1,5 +1,7 @@
-export const removeHtmlTags = (str: string): string =>
-  str.replace(/<[^>]*>/g, "");
+export const removeHtmlTags = (str: string): string => {
+  if (!str) return "";
+  return str.replace(/<[^>]*>/g, "");
+};
 
 export const currentDateMinusOneMonth = (): string => {
   return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
