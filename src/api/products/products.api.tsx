@@ -32,9 +32,7 @@ export async function updateProduct(
   return axios<Product>({
     method: "put",
     url: `${API_CREDENTIALS.host}/products/${productsCollectionDate}/${productId}`,
-    data: {
-      product: product,
-    },
+    data: product,
   });
 }
 
