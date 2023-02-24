@@ -1,22 +1,10 @@
-import { AxiosResponse } from "axios";
-import {
-  getGeneratedProductDescription,
-  getProducts,
-  GetProductsResponse,
-  PagingQueryParams,
-  updateProduct,
-} from "../../api/products/products.api";
-import { Product } from "../../api/products/products.model";
+import { ProductDto, ProductPagingDto } from "../../api";
 import { ProductListItem } from "../../components/ProductList/ProductList.model";
-import {
-  currentDateMinusOneMonth,
-  getQueryParamString,
-  removeHtmlTags,
-} from "../../utils/functions";
+import { getQueryParamString, removeHtmlTags } from "../../utils/functions";
 
 export function getPagingQueryParams(
-  paging: PagingQueryParams
-): PagingQueryParams {
+  paging: ProductPagingDto
+): ProductPagingDto {
   return {
     next: getQueryParamString(paging.next),
     previous: getQueryParamString(paging.previous),
@@ -24,7 +12,7 @@ export function getPagingQueryParams(
 }
 
 export function getProductListItem(
-  product: Product,
+  product: ProductDto,
   checked: boolean
 ): ProductListItem {
   return {
@@ -35,38 +23,9 @@ export function getProductListItem(
 }
 
 export function getProductListItems(
-  products: Product[],
+  products: ProductDto[],
   checked: boolean
 ): ProductListItem[] {
   if (!products?.length) return [];
   return products.map((product) => getProductListItem(product, checked));
 }
-
-export const getProductsByQuery = async (
-  query: string
-): Promise<GetProductsResponse> => {
-  const response: AxiosResponse<GetProductsResponse> = await getProducts(
-    currentDateMinusOneMonth(),
-    query
-  );
-  return response.data;
-};
-
-export const getProductDescription = async (
-  description: string
-): Promise<string> => {
-  const response = await getGeneratedProductDescription(description);
-  return response.data;
-};
-
-export const updateSingleProduct = async (
-  product: ProductListItem,
-  description: string
-): Promise<Product> => {
-  const collectionDate = currentDateMinusOneMonth();
-  const response = await updateProduct(collectionDate, product.id, {
-    ...product,
-    body_html: description,
-  });
-  return response.data;
-};

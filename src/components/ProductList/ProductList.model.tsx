@@ -1,5 +1,5 @@
-import { Product } from "../../api/products/products.model";
+import { ProductDto } from "../../api";
 
-export interface ProductListItem extends Product {
+export interface ProductListItem extends ProductDto {
   checked: boolean;
 }

@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 import {
-  PagingQueryParams,
-  GetProductsResponse,
-} from "../../api/products/products.api";
-import { Product } from "../../api/products/products.model";
+  GetProductsResponseDto,
+  ProductDto,
+  ProductPagingDto,
+} from "../../api";
 import Button from "../../components/Button";
 import ErrorModal from "../../components/ErrorModal";
 import Pagination from "../../components/Pagination/Pagination";
@@ -12,12 +12,14 @@ import { ProductListItem } from "../../components/ProductList/ProductList.model"
 import Spinner from "../../components/Spinner";
 import { ErrorMessage } from "../../utils/models";
 import {
-  getPagingQueryParams,
+  getProductsByQuery,
   getProductDescription,
+  updateSingleProduct,
+} from "./Products.api";
+import {
+  getPagingQueryParams,
   getProductListItem,
   getProductListItems,
-  getProductsByQuery,
-  updateSingleProduct,
 } from "./Products.utils";
 
 const ProductsPage = () => {
@@ -26,7 +28,7 @@ const ProductsPage = () => {
     []
   );
   const [pagingQueryParams, setPagingQueryParams] =
-    useState<PagingQueryParams | null>(null);
+    useState<ProductPagingDto | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<ErrorMessage | null>(null);
 
@@ -59,17 +61,17 @@ const ProductsPage = () => {
   const errorHandler = (): void => setError(null);
 
   const initialize = async (query: string): Promise<void> => {
-    const response: GetProductsResponse = await getProductsByQuery(query);
+    const response: GetProductsResponseDto = await getProductsByQuery(query);
     setPagingQueryParams(getPagingQueryParams(response.paging));
     setProducts(getProductListItems(response.products, false));
   };
 
   const updateProducts = async (): Promise<void> => {
     for (const selectedProduct of selectedProducts) {
-      const description: string = await getProductDescription(
-        `${selectedProduct.title}.${selectedProduct.body_html}`
-      );
-      const product: Product = await updateSingleProduct(
+      const description: string = await getProductDescription({
+        currentProductDescription: `${selectedProduct.title}.${selectedProduct.body_html}`,
+      });
+      const product: ProductDto = await updateSingleProduct(
         selectedProduct,
         description
       );
@@ -94,11 +96,11 @@ const ProductsPage = () => {
   };
 
   const fetchProductsHandler = useCallback(
-    async (query: string): Promise<void> => {
+    async (productsQuerySearchParams: string): Promise<void> => {
       try {
         setIsLoading(true);
         setError(null);
-        await initialize(query);
+        await initialize(productsQuerySearchParams);
       } catch (error: any) {
         setError({
           text: "Fetch products",
@@ -113,8 +115,8 @@ const ProductsPage = () => {
 
   useEffect(() => {
     const pageLimit = 100;
-    const query = `limit=${pageLimit}&order=created_at`;
-    fetchProductsHandler(query);
+    const productsQuerySearchParams = `limit=${pageLimit}&order=created_at`;
+    fetchProductsHandler(productsQuerySearchParams);
   }, [fetchProductsHandler]);
 
   useEffect(() => {

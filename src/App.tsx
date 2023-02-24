@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import useApi from "./hooks/useAPI";
 import HomePage from "./pages/Home";
 import ProductDetailPage from "./pages/ProductDetail";
 import ProductsPage from "./pages/Products/Products";
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  useApi();
   return <RouterProvider router={router} />;
 }
 
