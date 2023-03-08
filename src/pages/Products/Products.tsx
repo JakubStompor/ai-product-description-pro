@@ -61,7 +61,10 @@ const ProductsPage = () => {
   const errorHandler = (): void => setError(null);
 
   const initialize = async (query: string): Promise<void> => {
-    const response: GetProductsResponseDto = await getProductsByQuery(query);
+    const response: GetProductsResponseDto = await getProductsByQuery(
+      "2023-01",
+      query
+    );
     setPagingQueryParams(getPagingQueryParams(response.paging));
     setProducts(getProductListItems(response.products, false));
   };

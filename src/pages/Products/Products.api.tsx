@@ -9,11 +9,12 @@ import { ProductListItem } from "../../components/ProductList/ProductList.model"
 import { currentDateMinusOneMonth } from "../../utils/functions";
 
 export const getProductsByQuery = async (
+  collectionDate: string,
   productsQuerySearchParams: string
 ): Promise<GetProductsResponseDto> => {
   const response: GetProductsResponseDto =
     await ShopifyProductsService.productsControllerGetProducts(
-      currentDateMinusOneMonth(),
+      collectionDate,
       productsQuerySearchParams
     );
   return response;
