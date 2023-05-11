@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import useApi from "./hooks/useAPI";
+import useApi from "./hooks/useApi";
 import HomePage from "./pages/Home";
 import ProductDetailPage from "./pages/ProductDetail";
 import ProductsPage from "./pages/Products/Products";
